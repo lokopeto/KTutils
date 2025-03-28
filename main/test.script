@@ -1,0 +1,7 @@
+local utils = require("KTutils.KTutils")
+
+function init(init)
+	local ip, port = utils.deconcat_ip("192.168.1.1:25565")
+	
+	print(ip, port)
+end
