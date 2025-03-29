@@ -47,13 +47,21 @@ end
 
 -- convenient functions for ips
 function utils.concat_ip(ip,port)
-	return tostring(ip) .. ":" .. tostring(port) -- 127.0.0.0:0000
+	return tostring(ip) .. ":" .. tostring(port) -- example: 127.0.0.0:0000 = "127.0.0.0","0000"
 end
 
-function utils.deconcat_ip(ip)
-	local loc = string.find(ip, ":")
-	return string.sub(ip,0,loc - 1), string.sub(ip,loc + 1) -- ip, port
+function utils.deconcat_ip(str)
+	return utils.deconcat(str, ":")
 end
 --
+
+function utils.deconcat(str, finder)
+	local loc = string.find(str, finder)
+	if loc then
+		return string.sub(str,0,loc - 1), string.sub(str,loc + 1) -- ip, port
+	else
+		return str
+	end
+end
 
 return utils
