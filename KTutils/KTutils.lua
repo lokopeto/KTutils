@@ -55,6 +55,10 @@ function utils.deconcat_ip(str)
 end
 --
 
+function utils.concat(left, right, finder)
+	return left .. finder .. right
+end
+
 function utils.deconcat(str, finder)
 	local loc = string.find(str, finder)
 	if loc then
