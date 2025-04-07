@@ -61,8 +61,10 @@ end
 
 function utils.deconcat(str, finder)
 	local loc = string.find(str, finder)
+	local size = string.len(finder)
+	
 	if loc then
-		return string.sub(str,0,loc - 1), string.sub(str,loc + 1) -- ip, port
+		return string.sub(str,0,loc - 1), string.sub(str,loc + size) -- ip, port
 	else
 		return str
 	end

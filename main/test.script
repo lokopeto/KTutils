@@ -1,7 +1,7 @@
 local utils = require("KTutils.KTutils")
 
-function init(init)
-	local ip, port = utils.deconcat_ip("192.168.1.1:25565")
+function update(self,dt)
+	local r1, r2 = utils.deconcat("asdasdasd:::::lokop", ":::::")
 	
-	print(ip, port)
+	print(r1, r2)
 end
