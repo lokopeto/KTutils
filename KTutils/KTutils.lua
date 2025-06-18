@@ -70,4 +70,17 @@ function utils.deconcat(str, finder)
 	end
 end
 
+function utils.tablelookup(table)
+	assert(type(table) == "table", "Argument is not a Table")
+	print("")
+	print(tostring(table).." {")
+	for k,v in pairs(table) do
+		print(k..":")
+		if v then
+			print("  "..tostring(v))
+		end
+	end
+	print('}')
+end
+
 return utils

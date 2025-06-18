@@ -1,7 +1,8 @@
 local utils = require("KTutils.KTutils")
 
+
+
 function update(self,dt)
-	local r1, r2 = utils.deconcat("asdasdasd:::::lokop", ":::::")
-	
-	print(r1, r2)
+	local test = { "asofjkhsadofk", "sdkhjsdkfgjh" , "sdkjhsdgkjh", sadkjfhskljdfghskldjg = { "s", "sdtglfihj", "sdkljigh"}}
+	utils.tablelookup("test")
 end
