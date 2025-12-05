@@ -21,3 +21,7 @@ title = KTutils
 [library]
 include_dirs = KTutils
 
+[engine]
+max_time_step = 0.033333
+fixed_update_frequency = 90
+

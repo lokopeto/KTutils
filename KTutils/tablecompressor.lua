@@ -1,124 +1,116 @@
 -- path = /Entities#Player -- data = "basic data" -- customdata = "customdata"
 local M = {}
+local plus = "|"
+table.new = package.preload["table.new"]()
+ffi = package.preload["ffi"]()
+local buffer = package.preload["string.buffer"]()
 
-local type2simple = {
-	["string"]   = "s",
-	["number"]   = "n",
-	["function"] = "f",
-	["boolean"]  = "b",
-	["nil"]      = "0",
-}
-local simple2type = {
-	["s"] = "string",
-	["n"] = "number",
-	["f"] = "function",
-	["b"] = "boolean",
-	["0"] = "nil",
-}
-local simple2func = {
-	["s"] = function(v) return v end,
-	["n"] = tonumber,
-	["b"] = function(v)
-		if v == "true"  or v == true  or v == 1 or v == "1" then return true  end
-		if v == "false" or v == false or v == 0 or v == "0" then return false end
-		return nil
+
+local userdataConverter = {
+	vector3 = function(v) return { v.x, v.y, v.z } end,
+	vector4 = function(v) return { v.x, v.y, v.z, v.w } end,
+	matrix4 = function(m)
+		return {
+			m.m00, m.m01, m.m02, m.m03,
+			m.m10, m.m11, m.m12, m.m13,
+			m.m20, m.m21, m.m22, m.m23,
+			m.m30, m.m31, m.m32, m.m33,
+		}
 	end,
-	["0"] = function(_) return nil end,
+	quat = function(q) return { q.x, q.y, q.z, q.w } end,
+	vector = function(v)
+		local t = {}
+		for i = 1, #v do
+			t[i] = v[i]
+		end
+		return t
+	end,
+	hash = function(h) return hash_to_hex(h) or tostring(h) end,
+} -- table with function for perfomance
+local userdatas = {
+	"vector3",
+	"vector4",
+	"matrix4",
+	"quat",
+	"vector",
+	"hash",
+}
+local userdataType2userdata = {
+	vector3 = function(v) return vmath.vector3(v[1], v[2], v[3]) end,
+	vector4 = function(v) return vmath.vector4(v[1], v[2], v[3], v[4]) end,
+	matrix4 = function(v)
+		return vmath.matrix4(
+			v[1],  v[2],  v[3],  v[4],
+			v[5],  v[6],  v[7],  v[8],
+			v[9],  v[10], v[11], v[12],
+			v[13], v[14], v[15], v[16]
+		)
+	end,
+	quat = function(v) return vmath.quat(v[1], v[2], v[3], v[4]) end,
+	vector = function(v) return vmath.vector(v) end,
+	hash = function(v) return hash(v) end,
 }
 
-function M.compress(prefix,data)
-	prefix = prefix or ""
-	local str = ""
+-- duplication of name for perfomance
+-- numered tables is faster
 
-	local tables = { }
-	tables[1] = {}
-	for k,v in pairs(data) do
-		if type(v) == "table" then
-			tables[1][k] = v 
+local function deepcopy(orig, opt)
+	-- opt.userdata == true/false | pass userdata/convert to table
+	local orig_type = type(orig)
+	local copy
+	if orig_type == 'table' then
+		copy = {}
+		for orig_key, orig_value in next, orig, nil do
+			copy[deepcopy(orig_key,opt)] = deepcopy(orig_value,opt)
 		end
-	end
-
-	if next(tables[1]) then
-		local has_tables = 1
-		local i = 1
-		while has_tables >= 1 do
-			tables[i+1] = tables[i+1] or {}
-			has_tables = 0
-			for k,v in pairs(tables[i]) do
-				if type(v) == "table" then
-					for k1,v1 in pairs(v) do
-						tables[i+1][k.."/"..k1] = v1
-
-						has_tables = has_tables + 1
-					end        
-				else
-					tables[i+1][k] = v
+		setmetatable(copy, deepcopy(getmetatable(orig),opt))
+	else -- number, string, boolean, etc
+		if opt.userdata == true then
+			if type(orig) == "userdata" then
+				for k,v in ipairs(userdatas) do
+					if types["is_"..v](orig) then
+						orig = userdataConverter[v](orig)
+						orig.__userdataType = v
+						break
+					end
 				end
 			end
-			i = i + 1
+		end
+		copy = orig
+	end
+	return copy
+end
+local function table2userdata(orig, pastvalue, pastkey)
+	local orig_type = type(orig)
+	if orig_type == 'table' then
+		if orig.__userdataType then
+			local type = orig.__userdataType
+			orig.__userdataType = nil
+			pastvalue[pastkey] = userdataType2userdata[type](orig)
+			return
+		end
+		for orig_key, orig_value in next, orig, nil do
+			table2userdata(orig_value, orig, orig_key)
 		end
 	end
+end
 
-	-- concat everything
-	for k,v in pairs(data) do
-		if not tables[1][k] then
-			str = str..tostring(k).."="..type2simple[type(v)].."-"..tostring(v)..","
-		end
-	end
-	for k,v in pairs(tables) do
-		for k1,v1 in pairs(v) do
-			if type(v1) ~= "table" then
-				str = str..tostring(k1).."="..type2simple[type(v1)].."-"..tostring(v1)..","
-			end
-		end
-	end
+
+
+function M.compress(data,prefix)
+	prefix = prefix or ""
+
+	local table = deepcopy(data, {userdata = true})
+	local str = buffer.encode(table)
+
 	return prefix..":"..str
 end
 
-function M.decompress(str)
-	local prefix = string.sub(str, 0, string.find(str,":") - 1)
-	local data = string.sub(str, string.len(prefix) + 2)
-
-	-- separate path from value
-	local rawtable = {}
-	for s in string.gmatch(data,"(.-%,)") do
-		s = string.sub(s,0,-2)
-		local varpath = string.sub(s,0,string.find(s,"=") - 1)
-		local value = string.sub(s,string.len(varpath) + 2)
-		rawtable[varpath] = value
-	end
-	local table = {}
-
-	local tablekeys = {}
-	for k,v in pairs(rawtable) do
-		local finder = 0
-		local index = 1
-		local singlepath = {}
-		local oldF = 0
-		for s in string.gmatch(k,"(%/)") do
-			local key = ""
-			oldF = finder + 1
-			finder = string.find(k,"/",finder+1)
-			key = string.sub(k,oldF,finder - 1)
-			if string.match(key,"%d") == key then
-				key = tonumber(key)
-			end
-			singlepath[index] = key
-
-			index = index+1
-		end
-		local cur = table
-		for k1,v1 in ipairs(singlepath) do
-			if not cur[v1] then
-				cur[v1] = {}
-			end
-			cur = cur[v1]
-		end
-		local key = string.sub(k,finder + 1)
-		local v = simple2func[string.sub(v, 0, 1)](string.sub(v, 3))
-		cur[key] = v
-	end
-
+function M.decompress(str)	
+	local prefix, data = str:match("^(.-):(.*)")
+	data = buffer.decode(data)
+	table2userdata(data)
+	
 	return table, prefix
 end
 

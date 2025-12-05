@@ -1,3 +1,15 @@
+key_trigger {
+  input: KEY_SPACE
+  action: "pause"
+}
+key_trigger {
+  input: KEY_LEFT
+  action: "down_value"
+}
+key_trigger {
+  input: KEY_RIGHT
+  action: "up_value"
+}
 mouse_trigger {
   input: MOUSE_BUTTON_1
   action: "touch"

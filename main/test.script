@@ -1,8 +1,107 @@
+local buffer = package.preload["string.buffer"]()
+ffi = package.preload["ffi"]()
+C = ffi.C
+
+local EntityData = {
+	id = "goblin_01",
+	name = "Cave Goblin",
+
+	transform = {
+		position = vmath.vector3(4, 18, 0),
+		rotation = vmath.quat_rotation_z(0),
+		scale = vmath.vector3(1, 1, 1),
+
+		bounding = {
+			size = vmath.vector3(0.8, 1.2, 0),
+			offset = vmath.vector3(0, 0.1, 0)
+		}
+	},
+
+	stats = {
+		core = {
+			health = { current = 32, max = 32 },
+			stamina = { current = 14, max = 14 }
+		},
+		combat = {
+			attack = 6,
+			defense = 2,
+			speed = 1.1,
+			crit = { chance = 0.08, multiplier = 1.5 }
+		}
+	},
+
+	physics = {
+		velocity = vmath.vector3(0, 0, 0),
+		acceleration = vmath.vector3(0, -9.8, 0),
+		knockback = vmath.vector3(0, 0, 0),
+
+		collider = {
+			shape = "capsule",
+			radius = 0.35,
+			height = 1.2
+		}
+	}
+}
+
 local utils = require("KTutils.KTutils")
-
-
-
-function update(self,dt)
-	local test = { "asofjkhsadofk", "sdkhjsdkfgjh" , "sdkjhsdgkjh", sadkjfhskljdfghskldjg = { "s", "sdtglfihj", "sdkljigh"}}
-	utils.tablelookup("test")
+table.compress = require("KTutils.tablecompressor").compress
+table.decompress = require("KTutils.tablecompressor").decompress
+function init(self, dt)
+	msg.post(".", "acquire_input_focus")
+	profiler.enable_ui(true)
+	self.allow = true
+	self.count = 1
 end
+
+function fixed_update(self, dt)
+	if self.allow == true then
+		local compressed = table.compress(EntityData,"/local/entities#Goblin532")
+		table.decompress(compressed)
+	end
+end
+function on_input(self, action_id, action)
+	if action.pressed == true then
+		if action_id == hash("pause") then
+			if self.allow == true then
+				self.allow = false
+			else
+				self.allow = true
+			end
+		end
+	end
+end
+
+
+
+
+
+
+local table = {}
+-- local has_tables = 0
+-- local tableindex = {}
+-- for k,v in pairs(EntityData) do 
+-- 	if type(v) == "table" then
+-- 		tableindex[k] = v
+		
+-- 		table[k] = {}
+-- 		has_tables = has_tables + 1
+-- 	end
+-- end
+-- while has_tables > 0 do
+-- 	has_tables = 0
+-- 	local finded = {}
+-- 	for k,v in pairs(tableindex) do
+-- 		if type(v) == "table" then
+-- 			for k1,v1 in pairs(v) do
+-- 				if type(v1) == "table" then
+-- 					finded[k1] = v1
+					
+-- 					has_tables = has_tables + 1
+-- 				end
+-- 			end 
+-- 		end
+-- 	end
+-- 	tableindex = finded
+-- end
+
+
