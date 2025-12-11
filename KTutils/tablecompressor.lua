@@ -111,7 +111,7 @@ function M.decompress(str)
 	data = buffer.decode(data)
 	table2userdata(data)
 	
-	return table, prefix
+	return data, prefix
 end
 
 return M
