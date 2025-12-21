@@ -4,13 +4,18 @@ local floor_limit = 10000
 
 -- simple float imprecise handler
 function utils.zeroout(num)
-	if math.floor(num * floor_limit) == -1 then
-		return 0
-	elseif math.floor(num * floor_limit) == 1 then
+	if math.ceil(math.abs(num * floor_limit)) <= 1 then
 		return 0
 	else
 		return num
 	end
+end
+
+function utils.vzeroout(vector)
+	vector.x = utils.zeroout(vector.x)
+	vector.y = utils.zeroout(vector.y)
+	vector.z = utils.zeroout(vector.z)
+	return vector
 end
 --
 
@@ -62,7 +67,7 @@ end
 function utils.deconcat(str, finder)
 	local loc = string.find(str, finder)
 	local size = string.len(finder)
-	
+
 	if loc then
 		return string.sub(str,0,loc - 1), string.sub(str,loc + size) -- ip, port
 	else
