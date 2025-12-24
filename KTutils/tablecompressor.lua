@@ -25,7 +25,7 @@ local userdataConverter = {
 		end
 		return t
 	end,
-	hash = function(h) return hash_to_hex(h) or tostring(h) end,
+	hash = function(h) return {tostring(h), hash_to_hex(h)} end,
 } -- table with function for perfomance
 local userdatas = {
 	"vector3",
@@ -48,7 +48,7 @@ local userdataType2userdata = {
 	end,
 	quat = function(v) return vmath.quat(v[1], v[2], v[3], v[4]) end,
 	vector = function(v) return vmath.vector(v) end,
-	hash = function(v) return hash(v) end,
+	hash = function(v) return v end,
 }
 
 -- duplication of name for perfomance
@@ -115,3 +115,4 @@ function M.decompress(str)
 end
 
 return M
+
